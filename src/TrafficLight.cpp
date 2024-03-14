@@ -12,9 +12,9 @@ T MessageQueue<T>::receive()
     // The received object should then be returned by the receive function.
     std::unique_lock<std::mutex> lck(_mtx);
     _condition.wait(lck, [this] { return !_queue.empty(); });
-    auto obj = _queue.back();
+    T msg = std::move(_queue.back());
     _queue.pop_back();
-    return obj;
+    return msg;
 }
 
 template <typename T>
@@ -23,7 +23,7 @@ void MessageQueue<T>::send(T &&msg)
     // FP.4a : The method send should use the mechanisms std::lock_guard<std::mutex>
     // as well as _condition.notify_one() to add a new message to the queue and afterwards send a notification.
     std::lock_guard<std::mutex> lck(_mtx);
-    _queue.emplace_back(msg);
+    _queue.push_back(std::move(msg));
     _condition.notify_one();
 }
 
@@ -54,18 +54,17 @@ TrafficLightPhase TrafficLight::getCurrentPhase()
     return _currentPhase;
 }
 
-TrafficLightPhase TrafficLight::toggleCurrentPhase() {
+void TrafficLight::toggleCurrentPhase()
+{
     std::lock_guard<std::mutex> lck(_mutex);
     _currentPhase = _currentPhase == TrafficLightPhase::red ? TrafficLightPhase::green : TrafficLightPhase::red;
-    return _currentPhase;
 }
 
 void TrafficLight::simulate()
 {
     std::lock_guard<std::mutex> lck(_mutex);
     // FP.2b : Finally, the private method „cycleThroughPhases“ should be started in a thread when the public method „simulate“ is called. To do this, use the thread queue in the base class.
-    std::thread simulation = std::thread(&TrafficLight::cycleThroughPhases, this);
-    threads.emplace_back(std::move(simulation));
+    threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
 }
 
 int TrafficLight::generateTimeToNextPhase() {
@@ -86,8 +85,8 @@ void TrafficLight::cycleThroughPhases()
         auto currentTime{std::chrono::system_clock::now()};
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
         if (duration > cycleDuration) {
-            auto nextPhase = toggleCurrentPhase();
-            _queue.send(std::move(nextPhase));
+            toggleCurrentPhase();
+            _queue.send(std::move(_currentPhase));
             startTime = currentTime;
             cycleDuration = generateTimeToNextPhase();
         }
