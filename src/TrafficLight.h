@@ -56,7 +56,7 @@ public:
     void simulate();
 
 private:
-    static int timeToNextPhase ();
+    static int generateTimeToNextPhase ();
 
     // typical behaviour methods
     void cycleThroughPhases();
