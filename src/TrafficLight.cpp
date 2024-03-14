@@ -57,6 +57,7 @@ TrafficLightPhase TrafficLight::getCurrentPhase()
 TrafficLightPhase TrafficLight::toggleCurrentPhase() {
     std::lock_guard<std::mutex> lck(_mutex);
     _currentPhase = _currentPhase == TrafficLightPhase::red ? TrafficLightPhase::green : TrafficLightPhase::red;
+    return _currentPhase;
 }
 
 void TrafficLight::simulate()
