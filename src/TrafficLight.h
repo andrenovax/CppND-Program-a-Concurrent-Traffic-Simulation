@@ -5,8 +5,6 @@
 #include <deque>
 #include <condition_variable>
 #include "TrafficObject.h"
-#include <cstdlib>
-#include <ctime>
 
 // forward declarations to avoid include cycle
 class Vehicle;
