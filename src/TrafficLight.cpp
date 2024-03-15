@@ -62,7 +62,6 @@ void TrafficLight::toggleCurrentPhase()
 
 void TrafficLight::simulate()
 {
-    std::lock_guard<std::mutex> lck(_mutex);
     // FP.2b : Finally, the private method „cycleThroughPhases“ should be started in a thread when the public method „simulate“ is called. To do this, use the thread queue in the base class.
     threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
 }
@@ -78,18 +77,25 @@ void TrafficLight::cycleThroughPhases()
     // and toggles the current phase of the traffic light between red and green and sends an update method
     // to the message queue using move semantics. The cycle duration should be a random value between 4 and 6 seconds.
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles.
-    auto startTime{std::chrono::system_clock::now()};
-    int cycleDuration = generateTimeToNextPhase();
+//    auto startTime{std::chrono::system_clock::now()};
+//    int cycleDuration = generateTimeToNextPhase();
 
+//    while (true) {
+//        auto currentTime{std::chrono::system_clock::now()};
+//        auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
+//        if (duration > cycleDuration) {
+//            toggleCurrentPhase();
+//            _queue.send(std::move(_currentPhase));
+//            startTime = currentTime;
+//            cycleDuration = generateTimeToNextPhase();
+//        }
+//        std::this_thread::sleep_for(std::chrono::seconds(1));
+//    }
+
+    // shorter implementation which works well
     while (true) {
-        auto currentTime{std::chrono::system_clock::now()};
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
-        if (duration > cycleDuration) {
-            toggleCurrentPhase();
-            _queue.send(std::move(_currentPhase));
-            startTime = currentTime;
-            cycleDuration = generateTimeToNextPhase();
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(generateTimeToNextPhase()));
+        toggleCurrentPhase();
+        _queue.send(std::move(_currentPhase));
     }
 }
